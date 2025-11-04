@@ -158,7 +158,7 @@ export default function NewClaimPage() {
         submitData.append("documents", file)
       })
 
-      const response = await fetch("/api/claims", {
+      const response = await fetch("/api/claims/submit", {
         method: "POST",
         body: submitData,
       })
