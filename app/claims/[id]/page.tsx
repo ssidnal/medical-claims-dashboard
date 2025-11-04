@@ -1,8 +1,23 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, CheckCircle2, Clock, Download, FileText } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Download,
+  FileText,
+  ChevronDown,
+  Lightbulb,
+  Search,
+  TrendingUp,
+} from "lucide-react"
 import { claimsData } from "@/lib/data"
+import { useState } from "react"
 
 function StatusBadge({ status }: { status: string }) {
   const styles = {
@@ -35,6 +50,13 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ClaimDetailPage({ params }: { params: { id: string } }) {
   const claimData = claimsData.find((c) => c.id === params.id)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    extracted: true,
+  })
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }))
+  }
 
   if (!claimData) {
     return (
@@ -85,6 +107,134 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Claim Information */}
           <div className="lg:col-span-2 space-y-6">
+            <Card className="border-border">
+              <CardContent className="p-6 space-y-4">
+                {/* Decision Analysis & Reasoning */}
+                <Collapsible open={openSections.decision} onOpenChange={() => toggleSection("decision")}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5 text-foreground" />
+                      <h3 className="text-base font-semibold text-foreground">Decision Analysis & Reasoning</h3>
+                    </div>
+                    <ChevronDown
+                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.decision ? "rotate-180" : ""}`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <p className="text-sm text-foreground leading-relaxed">{claimData.decisionReasoning}</p>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <div className="border-t border-border" />
+
+                {/* Detailed Analysis Results */}
+                <Collapsible open={openSections.analysis} onOpenChange={() => toggleSection("analysis")}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-5 w-5 text-foreground" />
+                      <h3 className="text-base font-semibold text-foreground">Detailed Analysis Results</h3>
+                    </div>
+                    <ChevronDown
+                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.analysis ? "rotate-180" : ""}`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Completeness Score</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary" style={{ width: `${claimData.completeness}%` }} />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{claimData.completeness}%</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Confidence Level</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary" style={{ width: `${claimData.confidence}%` }} />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{claimData.confidence}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <div className="border-t border-border" />
+
+                {/* Improvement Suggestions */}
+                <Collapsible open={openSections.improvements} onOpenChange={() => toggleSection("improvements")}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-foreground" />
+                      <h3 className="text-base font-semibold text-foreground">Improvement Suggestions</h3>
+                    </div>
+                    <ChevronDown
+                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.improvements ? "rotate-180" : ""}`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <ul className="space-y-2 text-sm text-foreground">
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-0.5">•</span>
+                        <span>Ensure all medical reports include provider signatures and dates</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-0.5">•</span>
+                        <span>Include itemized billing statements for faster processing</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-primary mt-0.5">•</span>
+                        <span>Submit claims within 30 days of service for optimal review time</span>
+                      </li>
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <div className="border-t border-border" />
+
+                {/* Extracted Data */}
+                <Collapsible open={openSections.extracted} onOpenChange={() => toggleSection("extracted")}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-foreground" />
+                      <h3 className="text-base font-semibold text-foreground">Extracted Data</h3>
+                    </div>
+                    <ChevronDown
+                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.extracted ? "rotate-180" : ""}`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <div className="bg-primary/5 rounded-lg p-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <p className="text-xs font-semibold text-foreground mb-1">BILLED AMOUNT:</p>
+                          <p className="text-sm text-primary font-medium">
+                            ${claimData.extractedData.billedAmount.toFixed(2)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-foreground mb-1">PATIENT NAME:</p>
+                          <p className="text-sm text-primary font-medium">{claimData.patientName}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-foreground mb-1">POLICY NUMBER:</p>
+                          <p className="text-sm text-primary font-medium">{claimData.extractedData.policyNumber}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-foreground mb-1">SERVICE DATE:</p>
+                          <p className="text-sm text-primary font-medium">{claimData.extractedData.serviceDate}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
+
+            {/* Original Claim Information */}
             <Card className="border-border">
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold text-foreground mb-6">Claim Information</h2>
@@ -162,11 +312,66 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
             </Card>
           </div>
 
-          {/* Right Column - Processing Timeline */}
-          <div>
+          {/* Right Column - Quick Summary & Timeline */}
+          <div className="space-y-6">
             <Card className="border-border">
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-2">Processing Timeline</h2>
+                <h2 className="text-lg font-semibold text-foreground mb-4">Quick Summary</h2>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Status:</p>
+                    <Badge
+                      variant={
+                        claimData.status === "approved"
+                          ? "success"
+                          : claimData.status === "pending"
+                            ? "warning"
+                            : claimData.status === "rejected"
+                              ? "destructive"
+                              : "info"
+                      }
+                      className="text-xs uppercase"
+                    >
+                      {claimData.status === "approved"
+                        ? "APPROVED"
+                        : claimData.status === "pending"
+                          ? "PENDING"
+                          : claimData.status === "rejected"
+                            ? "REJECTED"
+                            : "UNDER REVIEW"}
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Completeness:</p>
+                    <Badge variant="info" className="text-xs">
+                      {claimData.completeness}%
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Confidence:</p>
+                    <Badge variant="default" className="text-xs">
+                      {claimData.confidence}%
+                    </Badge>
+                  </div>
+
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Lightbulb className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                      <h3 className="text-sm font-semibold text-foreground">Decision Reasoning</h3>
+                    </div>
+                    <p className="text-xs text-foreground leading-relaxed">{claimData.decisionReasoning}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Processing Timeline */}
+            <Card className="border-border">
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-2">Processing Timeline</h2>
                 <p className="text-sm text-muted-foreground mb-6">Track your claim's progress</p>
 
                 <div className="space-y-6">
