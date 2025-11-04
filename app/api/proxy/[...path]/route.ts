@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000"
+const FLASK_APP_URL = process.env.FLASK_APP_URL || "http://localhost:8000"
 
 export async function GET(request: NextRequest, { params }: { params: { path: string[] } }) {
   const path = params.path.join("/")
   const searchParams = request.nextUrl.searchParams.toString()
-  const url = `${FASTAPI_URL}/${path}${searchParams ? `?${searchParams}` : ""}`
+  const url = `${FLASK_APP_URL}/${path}${searchParams ? `?${searchParams}` : ""}`
 
   try {
     const response = await fetch(url, {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
 
 export async function POST(request: NextRequest, { params }: { params: { path: string[] } }) {
   const path = params.path.join("/")
-  const url = `${FASTAPI_URL}/${path}`
+  const url = `${FLASK_APP_URL}/${path}`
 
   try {
     const body = await request.json()
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: { path: s
 export async function PUT(request: NextRequest, { params }: { params: { path: string[] } }) {
   const path = params.path.join("/")
   const searchParams = request.nextUrl.searchParams.toString()
-  const url = `${FASTAPI_URL}/${path}${searchParams ? `?${searchParams}` : ""}`
+  const url = `${FLASK_APP_URL}/${path}${searchParams ? `?${searchParams}` : ""}`
 
   try {
     const body = await request.json()
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest, { params }: { params: { path: st
 
 export async function DELETE(request: NextRequest, { params }: { params: { path: string[] } }) {
   const path = params.path.join("/")
-  const url = `${FASTAPI_URL}/${path}`
+  const url = `${FLASK_APP_URL}/${path}`
 
   try {
     const response = await fetch(url, {

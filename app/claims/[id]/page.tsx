@@ -74,6 +74,8 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
     )
   }
 
+  const hasAiAnalysis = claimData.aiAnalysis || (claimData.completeness && claimData.confidence)
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -107,132 +109,180 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Claim Information */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-border">
-              <CardContent className="p-6 space-y-4">
-                {/* Decision Analysis & Reasoning */}
-                <Collapsible open={openSections.decision} onOpenChange={() => toggleSection("decision")}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                    <div className="flex items-center gap-2">
-                      <Lightbulb className="h-5 w-5 text-foreground" />
-                      <h3 className="text-base font-semibold text-foreground">Decision Analysis & Reasoning</h3>
-                    </div>
-                    <ChevronDown
-                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.decision ? "rotate-180" : ""}`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-4">
-                    <p className="text-sm text-foreground leading-relaxed">{claimData.decisionReasoning}</p>
-                  </CollapsibleContent>
-                </Collapsible>
+            {hasAiAnalysis && (
+              <Card className="border-border">
+                <CardContent className="p-6 space-y-4">
+                  {/* Decision Analysis & Reasoning */}
+                  <Collapsible open={openSections.decision} onOpenChange={() => toggleSection("decision")}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                      <div className="flex items-center gap-2">
+                        <Lightbulb className="h-5 w-5 text-foreground" />
+                        <h3 className="text-base font-semibold text-foreground">Decision Analysis & Reasoning</h3>
+                      </div>
+                      <ChevronDown
+                        className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.decision ? "rotate-180" : ""}`}
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4">
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {claimData.aiAnalysis?.decisionReasoning || claimData.decisionReasoning}
+                      </p>
+                    </CollapsibleContent>
+                  </Collapsible>
 
-                <div className="border-t border-border" />
+                  <div className="border-t border-border" />
 
-                {/* Detailed Analysis Results */}
-                <Collapsible open={openSections.analysis} onOpenChange={() => toggleSection("analysis")}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                    <div className="flex items-center gap-2">
-                      <Search className="h-5 w-5 text-foreground" />
-                      <h3 className="text-base font-semibold text-foreground">Detailed Analysis Results</h3>
-                    </div>
-                    <ChevronDown
-                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.analysis ? "rotate-180" : ""}`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Completeness Score</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-primary" style={{ width: `${claimData.completeness}%` }} />
+                  {/* Detailed Analysis Results */}
+                  <Collapsible open={openSections.analysis} onOpenChange={() => toggleSection("analysis")}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                      <div className="flex items-center gap-2">
+                        <Search className="h-5 w-5 text-foreground" />
+                        <h3 className="text-base font-semibold text-foreground">Detailed Analysis Results</h3>
+                      </div>
+                      <ChevronDown
+                        className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.analysis ? "rotate-180" : ""}`}
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Completeness Score</p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-cyan-500"
+                                style={{
+                                  width: `${claimData.aiAnalysis?.completeness || claimData.completeness}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-foreground">
+                              {claimData.aiAnalysis?.completeness || claimData.completeness}%
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-foreground">{claimData.completeness}%</span>
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Confidence Level</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-primary" style={{ width: `${claimData.confidence}%` }} />
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Confidence Level</p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-600"
+                                style={{ width: `${claimData.aiAnalysis?.confidence || claimData.confidence}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-foreground">
+                              {claimData.aiAnalysis?.confidence || claimData.confidence}%
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-foreground">{claimData.confidence}%</span>
                         </div>
                       </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                <div className="border-t border-border" />
-
-                {/* Improvement Suggestions */}
-                <Collapsible open={openSections.improvements} onOpenChange={() => toggleSection("improvements")}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-foreground" />
-                      <h3 className="text-base font-semibold text-foreground">Improvement Suggestions</h3>
-                    </div>
-                    <ChevronDown
-                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.improvements ? "rotate-180" : ""}`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-4">
-                    <ul className="space-y-2 text-sm text-foreground">
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary mt-0.5">•</span>
-                        <span>Ensure all medical reports include provider signatures and dates</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary mt-0.5">•</span>
-                        <span>Include itemized billing statements for faster processing</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary mt-0.5">•</span>
-                        <span>Submit claims within 30 days of service for optimal review time</span>
-                      </li>
-                    </ul>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                <div className="border-t border-border" />
-
-                {/* Extracted Data */}
-                <Collapsible open={openSections.extracted} onOpenChange={() => toggleSection("extracted")}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-foreground" />
-                      <h3 className="text-base font-semibold text-foreground">Extracted Data</h3>
-                    </div>
-                    <ChevronDown
-                      className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.extracted ? "rotate-180" : ""}`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-4">
-                    <div className="bg-primary/5 rounded-lg p-4">
-                      <div className="grid grid-cols-2 gap-6">
-                        <div>
-                          <p className="text-xs font-semibold text-foreground mb-1">BILLED AMOUNT:</p>
-                          <p className="text-sm text-primary font-medium">
-                            ${claimData.extractedData.billedAmount.toFixed(2)}
-                          </p>
+                      {claimData.aiAnalysis?.detailedAnalysis && (
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <p className="text-sm text-foreground">{claimData.aiAnalysis.detailedAnalysis}</p>
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-foreground mb-1">PATIENT NAME:</p>
-                          <p className="text-sm text-primary font-medium">{claimData.patientName}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-foreground mb-1">POLICY NUMBER:</p>
-                          <p className="text-sm text-primary font-medium">{claimData.extractedData.policyNumber}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-foreground mb-1">SERVICE DATE:</p>
-                          <p className="text-sm text-primary font-medium">{claimData.extractedData.serviceDate}</p>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  <div className="border-t border-border" />
+
+                  {/* Improvement Suggestions */}
+                  <Collapsible open={openSections.improvements} onOpenChange={() => toggleSection("improvements")}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-foreground" />
+                        <h3 className="text-base font-semibold text-foreground">Improvement Suggestions</h3>
+                      </div>
+                      <ChevronDown
+                        className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.improvements ? "rotate-180" : ""}`}
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4">
+                      <ul className="space-y-2 text-sm text-foreground">
+                        {claimData.aiAnalysis?.improvementSuggestions &&
+                        claimData.aiAnalysis.improvementSuggestions.length > 0 ? (
+                          claimData.aiAnalysis.improvementSuggestions.map((suggestion: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-primary mt-0.5">•</span>
+                              <span>{suggestion}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary mt-0.5">•</span>
+                              <span>Ensure all medical reports include provider signatures and dates</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary mt-0.5">•</span>
+                              <span>Include itemized billing statements for faster processing</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary mt-0.5">•</span>
+                              <span>Submit claims within 30 days of service for optimal review time</span>
+                            </li>
+                          </>
+                        )}
+                      </ul>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  <div className="border-t border-border" />
+
+                  {/* Extracted Data */}
+                  <Collapsible open={openSections.extracted} onOpenChange={() => toggleSection("extracted")}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-foreground" />
+                        <h3 className="text-base font-semibold text-foreground">Extracted Data</h3>
+                      </div>
+                      <ChevronDown
+                        className={`h-5 w-5 text-muted-foreground transition-transform ${openSections.extracted ? "rotate-180" : ""}`}
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4">
+                      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4">
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <p className="text-xs font-semibold text-foreground mb-1">BILLED AMOUNT:</p>
+                            <p className="text-sm text-primary font-medium">
+                              $
+                              {(
+                                claimData.aiAnalysis?.extractedData?.billed_amount ||
+                                claimData.extractedData?.billedAmount ||
+                                claimData.amount
+                              ).toFixed(2)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-foreground mb-1">PATIENT NAME:</p>
+                            <p className="text-sm text-primary font-medium">
+                              {claimData.aiAnalysis?.extractedData?.patient_name || claimData.patientName}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-foreground mb-1">POLICY NUMBER:</p>
+                            <p className="text-sm text-primary font-medium">
+                              {claimData.aiAnalysis?.extractedData?.policy_number ||
+                                claimData.extractedData?.policyNumber ||
+                                claimData.patientId}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-foreground mb-1">SERVICE DATE:</p>
+                            <p className="text-sm text-primary font-medium">
+                              {claimData.aiAnalysis?.extractedData?.service_date ||
+                                claimData.extractedData?.serviceDate ||
+                                claimData.serviceDate}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Original Claim Information */}
             <Card className="border-border">
@@ -250,7 +300,7 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Claim Type</p>
-                    <p className="text-base font-medium text-foreground">{claimData.type}</p>
+                    <p className="text-base font-medium text-foreground capitalize">{claimData.type}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Service Date</p>
@@ -271,102 +321,99 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
                   <p className="text-base font-medium text-foreground">{claimData.diagnosis}</p>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-border">
-                  <p className="text-sm text-muted-foreground mb-2">Additional Notes</p>
-                  <p className="text-base text-foreground">{claimData.notes}</p>
-                </div>
+                {claimData.notes && (
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <p className="text-sm text-muted-foreground mb-2">Additional Notes</p>
+                    <p className="text-base text-foreground">{claimData.notes}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Supporting Documents */}
-            <Card className="border-border">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-2">Supporting Documents</h2>
-                <p className="text-sm text-muted-foreground mb-6">View and download claim-related documents</p>
+            {claimData.documents && claimData.documents.length > 0 && (
+              <Card className="border-border">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Supporting Documents</h2>
+                  <p className="text-sm text-muted-foreground mb-6">View and download claim-related documents</p>
 
-                <div className="space-y-3">
-                  {claimData.documents.map((doc, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <FileText className="h-6 w-6 text-primary" />
+                  <div className="space-y-3">
+                    {claimData.documents.map((doc, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                            <FileText className="h-6 w-6 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{doc.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {doc.size} • Uploaded {doc.uploadedDate || doc.uploadDate}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {doc.size} • Uploaded {doc.uploadDate}
-                          </p>
-                        </div>
+                        <Button variant="outline" size="sm">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column - Quick Summary & Timeline */}
           <div className="space-y-6">
-            <Card className="border-border">
-              <CardContent className="p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">Quick Summary</h2>
+            {hasAiAnalysis && (
+              <Card className="border-border">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-semibold text-foreground mb-4">Quick Summary</h2>
 
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Status:</p>
-                    <Badge
-                      variant={
-                        claimData.status === "approved"
-                          ? "success"
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Status:</p>
+                      <Badge variant="secondary" className="text-xs uppercase bg-gray-500 text-white hover:bg-gray-600">
+                        {claimData.status === "approved"
+                          ? "APPROVED"
                           : claimData.status === "pending"
-                            ? "warning"
+                            ? "PENDING"
                             : claimData.status === "rejected"
-                              ? "destructive"
-                              : "info"
-                      }
-                      className="text-xs uppercase"
-                    >
-                      {claimData.status === "approved"
-                        ? "APPROVED"
-                        : claimData.status === "pending"
-                          ? "PENDING"
-                          : claimData.status === "rejected"
-                            ? "REJECTED"
-                            : "UNDER REVIEW"}
-                    </Badge>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Completeness:</p>
-                    <Badge variant="info" className="text-xs">
-                      {claimData.completeness}%
-                    </Badge>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Confidence:</p>
-                    <Badge variant="default" className="text-xs">
-                      {claimData.confidence}%
-                    </Badge>
-                  </div>
-
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex items-start gap-2 mb-2">
-                      <Lightbulb className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
-                      <h3 className="text-sm font-semibold text-foreground">Decision Reasoning</h3>
+                              ? "REJECTED"
+                              : "UNDER REVIEW"}
+                      </Badge>
                     </div>
-                    <p className="text-xs text-foreground leading-relaxed">{claimData.decisionReasoning}</p>
+
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Completeness:</p>
+                      <Badge variant="secondary" className="text-xs bg-cyan-500 text-white hover:bg-cyan-600">
+                        {claimData.aiAnalysis?.completeness || claimData.completeness}%
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Confidence:</p>
+                      <Badge variant="secondary" className="text-xs bg-blue-600 text-white hover:bg-blue-700">
+                        {claimData.aiAnalysis?.confidence || claimData.confidence}%
+                      </Badge>
+                    </div>
+
+                    <div className="pt-4 border-t border-border">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Lightbulb className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+                        <h3 className="text-sm font-semibold text-foreground">Decision Reasoning</h3>
+                      </div>
+                      <p className="text-xs text-foreground leading-relaxed">
+                        {claimData.aiAnalysis?.decisionReasoning || claimData.decisionReasoning}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Processing Timeline */}
             <Card className="border-border">
@@ -380,13 +427,13 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
                       <div className="flex flex-col items-center">
                         <div
                           className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                            item.completed ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"
+                            item.completed ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {item.completed ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
                         </div>
                         {index < claimData.timeline.length - 1 && (
-                          <div className={`w-0.5 h-12 ${item.completed ? "bg-success" : "bg-border"}`} />
+                          <div className={`w-0.5 h-12 ${item.completed ? "bg-green-500" : "bg-border"}`} />
                         )}
                       </div>
                       <div className="flex-1 pb-6">

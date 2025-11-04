@@ -12,13 +12,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Upload, X } from "lucide-react"
+import { ArrowLeft, Upload, X, FileText, Loader2 } from "lucide-react"
 
 export default function NewClaimPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [files, setFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<any>(null)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -40,6 +42,63 @@ export default function NewClaimPage() {
 
   const removeFile = (index: number) => {
     setFiles(files.filter((_, i) => i !== index))
+    setAnalysisResult(null)
+  }
+
+  const analyzeDocument = async () => {
+    if (files.length === 0) {
+      toast({
+        title: "No Document",
+        description: "Please upload a document first",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsAnalyzing(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", files[0])
+      formData.append("claim_type", "medical")
+
+      const response = await fetch("/api/proxy/analyze", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to analyze document")
+      }
+
+      const result = await response.json()
+      setAnalysisResult(result)
+
+      // Auto-fill form with extracted data
+      if (result.extracted_data) {
+        setFormData((prev) => ({
+          ...prev,
+          firstName: result.extracted_data.patient_name?.split(" ")[0] || prev.firstName,
+          lastName: result.extracted_data.patient_name?.split(" ").slice(1).join(" ") || prev.lastName,
+          patientId: result.extracted_data.policy_number || prev.patientId,
+          amount: result.extracted_data.billed_amount?.toString() || prev.amount,
+          serviceDate: result.extracted_data.service_date || prev.serviceDate,
+        }))
+      }
+
+      toast({
+        title: "Analysis Complete",
+        description: "Document analyzed successfully. Form fields have been auto-filled.",
+      })
+    } catch (error) {
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze document. Please try again or fill the form manually.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -77,12 +136,31 @@ export default function NewClaimPage() {
     setIsSubmitting(true)
 
     try {
+      const submitData = new FormData()
+      submitData.append("firstName", formData.firstName)
+      submitData.append("lastName", formData.lastName)
+      submitData.append("dob", formData.dob)
+      submitData.append("patientId", formData.patientId)
+      submitData.append("claimType", formData.claimType)
+      submitData.append("serviceDate", formData.serviceDate)
+      submitData.append("provider", formData.provider)
+      submitData.append("amount", formData.amount)
+      submitData.append("diagnosis", formData.diagnosis)
+      submitData.append("notes", formData.notes)
+
+      // Add analysis result if available
+      if (analysisResult) {
+        submitData.append("analysisResult", JSON.stringify(analysisResult))
+      }
+
+      // Add files
+      files.forEach((file) => {
+        submitData.append("documents", file)
+      })
+
       const response = await fetch("/api/claims", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body: submitData,
       })
 
       if (!response.ok) {
@@ -138,6 +216,107 @@ export default function NewClaimPage() {
             </div>
 
             <form className="space-y-8" onSubmit={handleSubmit}>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-4 pb-2 border-b border-border">
+                  Upload Claim Document
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload PDF or image files for AI-powered analysis using GPT-4 Mini
+                </p>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                    <input
+                      type="file"
+                      id="fileUpload"
+                      className="hidden"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleFileChange}
+                    />
+                    <label htmlFor="fileUpload" className="cursor-pointer">
+                      <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm font-medium text-foreground mb-1">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground">PDF, JPG, PNG up to 10MB</p>
+                    </label>
+                  </div>
+
+                  {files.length > 0 && (
+                    <div className="space-y-2">
+                      {files.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-green-500/10 rounded flex items-center justify-center">
+                              <FileText className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{file.name}</p>
+                              <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            </div>
+                          </div>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(index)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {files.length > 0 && (
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        onClick={analyzeDocument}
+                        disabled={isAnalyzing}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Analyze with AI
+                          </>
+                        )}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setFiles([])}>
+                        Clear File
+                      </Button>
+                    </div>
+                  )}
+
+                  {analysisResult && (
+                    <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <svg
+                            className="h-5 w-5 text-white"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                            Document Analyzed Successfully
+                          </h3>
+                          <p className="text-sm text-green-700 dark:text-green-300">
+                            Confidence: {analysisResult.confidence}% | Completeness: {analysisResult.completeness}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Patient Information */}
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-4 pb-2 border-b border-border">
@@ -244,51 +423,6 @@ export default function NewClaimPage() {
                     onChange={handleInputChange}
                     required
                   />
-                </div>
-              </div>
-
-              {/* Supporting Documents */}
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-4 pb-2 border-b border-border">
-                  Supporting Documents
-                </h2>
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                    <input
-                      type="file"
-                      id="fileUpload"
-                      className="hidden"
-                      multiple
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileChange}
-                    />
-                    <label htmlFor="fileUpload" className="cursor-pointer">
-                      <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-sm font-medium text-foreground mb-1">Click to upload or drag and drop</p>
-                      <p className="text-xs text-muted-foreground">PDF, JPG, PNG up to 10MB</p>
-                    </label>
-                  </div>
-
-                  {files.length > 0 && (
-                    <div className="space-y-2">
-                      {files.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-primary/10 rounded flex items-center justify-center">
-                              <Upload className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{file.name}</p>
-                              <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                            </div>
-                          </div>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(index)}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
 
